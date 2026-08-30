@@ -3,57 +3,105 @@ import { LeafUpload } from './components/LeafUpload'
 import { PredictionCard } from './components/PredictionCard'
 import { GradCamViewer } from './components/GradCamViewer'
 import { DiseaseCatalog } from './components/DiseaseCatalog'
-import { Microscope, Activity, ShieldCheck, AlertCircle, Info, Clipboard, BookOpen, RefreshCw } from 'lucide-react'
+import { BookOpen, Activity, AlertCircle } from 'lucide-react'
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
-export default function App() {
-  const [selectedImage, setSelectedImage] = useState(null)
-  const [isAnalyzing, setIsAnalyzing] = useState(false)
-  const [prediction, setPrediction] = useState(null)
-  const [systemHealth, setSystemHealth] = useState(null)
-  const [diseaseCatalog, setDiseaseCatalog] = useState(null)
-  const [isCatalogOpen, setIsCatalogOpen] = useState(false)
-  const [errorMsg, setErrorMsg] = useState(null)
+// ── SVG logo mark — a minimal leaf/frond icon ────────────────────────
+function LeafIcon({ size = 20 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path
+        d="M12 2C12 2 4 6 4 13C4 17.4 7.6 21 12 21C16.4 21 20 17.4 20 13C20 6 12 2 12 2Z"
+        fill="rgba(90,138,94,0.35)"
+        stroke="rgba(168,197,160,0.7)"
+        strokeWidth="1.2"
+        strokeLinejoin="round"
+      />
+      <line x1="12" y1="2" x2="12" y2="21" stroke="rgba(168,197,160,0.5)" strokeWidth="1" />
+      <path d="M12 7 Q16 10 18 13" stroke="rgba(168,197,160,0.25)" strokeWidth="0.8" fill="none" />
+      <path d="M12 7 Q8 10 6 13"  stroke="rgba(168,197,160,0.25)" strokeWidth="0.8" fill="none" />
+      <path d="M12 12 Q15 13.5 17 15" stroke="rgba(168,197,160,0.2)" strokeWidth="0.8" fill="none" />
+      <path d="M12 12 Q9 13.5 7 15" stroke="rgba(168,197,160,0.2)" strokeWidth="0.8" fill="none" />
+    </svg>
+  )
+}
 
-  // Fetch backend status on mount
-  useEffect(() => {
-    fetchHealth()
-    fetchDiseases()
-  }, [])
+// ── Loading overlay ──────────────────────────────────────────────────
+function LoadingOverlay() {
+  return (
+    <div className="loading-overlay">
+      <div className="loading-box">
+        <div className="loading-ring" />
+        <div>
+          <p className="loading-title">Analysing tissue sample</p>
+          <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginTop: '6px' }}>
+            Running the pathology model…
+          </p>
+        </div>
+        <div className="loading-steps">
+          <div className="loading-step">
+            <div className="loading-step-dot" />
+            <div className="loading-step-dot" />
+            <div className="loading-step-dot" />
+            <span>Pre-processing image · Model inference · Grad-CAM saliency</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ── Disease chips shown in the empty state ───────────────────────────
+const DISEASE_HINTS = [
+  { name: 'Healthy',            dot: ''         },
+  { name: 'Yellow Leaf Disease', dot: 'dot-amber' },
+  { name: 'Koleroga / Rot',      dot: 'dot-red'   },
+  { name: 'Stem Bleeding',       dot: 'dot-red'   },
+  { name: 'Bud Rot',             dot: 'dot-amber' },
+  { name: 'Anabe / Spindle Bug', dot: 'dot-amber' },
+  { name: 'Leaf Scorch',         dot: 'dot-red'   },
+  { name: 'Mahali Koleroga',     dot: 'dot-amber' },
+  { name: 'Crown Choke',         dot: 'dot-red'   },
+]
+
+export default function App() {
+  const [selectedImage, setSelectedImage]   = useState(null)
+  const [isAnalyzing, setIsAnalyzing]       = useState(false)
+  const [prediction, setPrediction]         = useState(null)
+  const [systemHealth, setSystemHealth]     = useState(null)
+  const [diseaseCatalog, setDiseaseCatalog] = useState(null)
+  const [isCatalogOpen, setIsCatalogOpen]   = useState(false)
+  const [errorMsg, setErrorMsg]             = useState(null)
+
+  useEffect(() => { fetchHealth(); fetchDiseases() }, [])
 
   const fetchHealth = async () => {
     try {
-      const res = await fetch(`${API_BASE}/health`)
+      const res  = await fetch(`${API_BASE}/health`)
       const data = await res.json()
       setSystemHealth(data)
-    } catch (err) {
-      console.warn('Backend not responding yet:', err)
+    } catch {
       setSystemHealth({ status: 'offline', demo_mode: true })
     }
   }
 
   const fetchDiseases = async () => {
     try {
-      const res = await fetch(`${API_BASE}/api/diseases`)
+      const res  = await fetch(`${API_BASE}/api/diseases`)
       const data = await res.json()
       setDiseaseCatalog(data)
-    } catch (err) {
-      console.warn('Could not fetch disease catalog:', err)
-    }
+    } catch (err) { console.warn('Disease catalog unavailable:', err) }
   }
 
   const handleImageSelected = (file) => {
-    const previewUrl = URL.createObjectURL(file)
-    setSelectedImage({ file, previewUrl })
+    setSelectedImage({ file, previewUrl: URL.createObjectURL(file) })
     setPrediction(null)
     setErrorMsg(null)
   }
 
   const handleReset = () => {
-    if (selectedImage?.previewUrl) {
-      URL.revokeObjectURL(selectedImage.previewUrl)
-    }
+    if (selectedImage?.previewUrl) URL.revokeObjectURL(selectedImage.previewUrl)
     setSelectedImage(null)
     setPrediction(null)
     setErrorMsg(null)
@@ -63,199 +111,226 @@ export default function App() {
     if (!selectedImage) return
     setIsAnalyzing(true)
     setErrorMsg(null)
-
     try {
       const formData = new FormData()
       formData.append('file', selectedImage.file)
-
-      const res = await fetch(`${API_BASE}/predict?generate_cam=true`, {
-        method: 'POST',
-        body: formData
-      })
-
+      const res = await fetch(`${API_BASE}/predict?generate_cam=true`, { method: 'POST', body: formData })
       if (!res.ok) {
-        const errJson = await res.json().catch(() => ({}))
-        throw new Error(errJson.detail || `Server returned error ${res.status}`)
+        const err = await res.json().catch(() => ({}))
+        throw new Error(err.detail || `Server returned ${res.status}`)
       }
-
-      const result = await res.json()
-      setPrediction(result)
+      setPrediction(await res.json())
     } catch (err) {
-      console.error('Diagnosis failed:', err)
-      setErrorMsg(`Analysis failed: ${err.message}. Please check if the laboratory backend is active.`)
+      setErrorMsg(`Analysis failed: ${err.message}`)
     } finally {
       setIsAnalyzing(false)
     }
   }
 
+  const statusColor =
+    systemHealth?.status === 'offline' ? '#ef4444'
+    : systemHealth?.demo_mode          ? '#fbbf24'
+    : '#4ade80'
+
+  const statusText =
+    systemHealth?.status === 'offline' ? 'System Offline'
+    : systemHealth?.demo_mode          ? 'Initializing'
+    : 'System Ready'
+
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-      {/* Top Navbar */}
-      <header
-        style={{
-          borderBottom: '1px solid var(--border-card)',
-          background: 'rgba(12, 16, 13, 0.95)',
-          position: 'sticky',
-          top: 0,
-          zIndex: 100
-        }}
-      >
-        <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '14px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <div
-              style={{
-                width: '36px',
-                height: '36px',
-                borderRadius: '6px',
-                background: 'var(--forest-600)',
-                border: '1px solid var(--forest-500)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                boxShadow: '0 2px 8px rgba(74, 112, 81, 0.1)'
-              }}
-            >
-              <Microscope size={18} color="#fff" />
+    <>
+      {/* ── Full-page cinematic background ── */}
+      <div className="page-bg" />
+
+      {/* ── Loading overlay ── */}
+      {isAnalyzing && <LoadingOverlay />}
+
+      <div className="page-content">
+
+        {/* ────────────────────── NAVBAR ────────────────────── */}
+        <nav className="navbar">
+          <div className="nav-brand">
+            <div className="nav-logo-mark">
+              <LeafIcon size={18} />
             </div>
             <div>
-              <h1 style={{ fontSize: '18px', fontWeight: '700', letterSpacing: '-0.3px', color: '#fff', fontFamily: 'var(--font-serif)' }}>
-                AdikeScan
-              </h1>
-              <p style={{ fontSize: '10px', color: 'var(--text-muted)' }}>
-                Arecanut Palm Pathology Diagnostic Tool
-              </p>
+              <div className="nav-title">AdikeScan</div>
+              <div className="nav-subtitle">Arecanut Palm Disease Diagnostics</div>
             </div>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            {/* System Status Pill */}
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                padding: '5px 12px',
-                background: '#111512',
-                border: '1px solid var(--border-card)',
-                borderRadius: '4px',
-                fontSize: '11px'
-              }}
-            >
-              <div
-                style={{
-                  width: '6px',
-                  height: '6px',
-                  borderRadius: '50%',
-                  backgroundColor:
-                    systemHealth?.status === 'offline'
-                      ? '#ef4444'
-                      : systemHealth?.demo_mode
-                      ? '#fbbf24'
-                      : 'var(--forest-400)'
-                }}
-              />
-              <span style={{ color: 'var(--text-secondary)' }}>
-                {systemHealth?.status === 'offline'
-                  ? 'System Offline'
-                  : systemHealth?.demo_mode
-                  ? 'Specimen DB Loading'
-                  : `Diagnostics Active (${systemHealth?.device?.toUpperCase() || 'CPU'})`}
-              </span>
+          <div className="nav-right">
+            <div className="status-dot">
+              <div className="dot" style={{ backgroundColor: statusColor }} />
+              <span>{statusText}</span>
             </div>
-
-            <button
-              type="button"
-              className="btn-secondary"
-              style={{ padding: '6px 12px', fontSize: '12px' }}
-              onClick={() => setIsCatalogOpen(true)}
-            >
-              <BookOpen size={13} /> Diagnostic Reference
+            <button type="button" className="btn-secondary" onClick={() => setIsCatalogOpen(true)}>
+              <BookOpen size={13} /> Disease Reference
             </button>
           </div>
-        </div>
-      </header>
+        </nav>
 
-      {/* Main Content */}
-      <main style={{ flex: 1, maxWidth: '1100px', margin: '0 auto', width: '100%', padding: '40px 20px', display: 'flex', flexDirection: 'column', gap: '32px' }}>
-        {/* Intro Banner */}
-        <div style={{ textAlign: 'center', maxWidth: '720px', margin: '0 auto' }}>
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '4px 12px', background: 'rgba(74, 112, 81, 0.08)', border: '1px solid rgba(74, 112, 81, 0.2)', borderRadius: '4px', color: 'var(--forest-400)', fontSize: '12px', fontWeight: '500', marginBottom: '14px' }}>
-            Botanical Pathology Report & Visual Saliency Mapping
-          </div>
-          <h2 style={{ fontSize: '32px', fontWeight: '700', letterSpacing: '-0.5px', color: '#fff', marginBottom: '12px', fontFamily: 'var(--font-serif)' }}>
-            Arecanut Palm Pathology Report
-          </h2>
-          <p style={{ fontSize: '14px', color: 'var(--text-secondary)', lineHeight: '1.6', maxWidth: '640px', margin: '0 auto' }}>
-            Upload tissue samples (leaves, trunk, base, or fruit) to analyze symptomatic regions, generate saliency heatmaps, and load tailored agronomic treatments.
-          </p>
-        </div>
+        {/* ────────────────────── HERO + UPLOAD (unified two-column) ────────────────────── */}
+        <div className="hero-upload-grid">
 
-        {/* Upload Widget */}
-        <section>
-          <LeafUpload
-            selectedImage={selectedImage}
-            onImageSelected={handleImageSelected}
-            onReset={handleReset}
-            isAnalyzing={isAnalyzing}
-          />
+          {/* LEFT — hero copy */}
+          <div className="hero-col">
+            <div className="hero-eyebrow">
+              <span />
+              Arecanut Palm · Pathogen Detection
+              <span />
+            </div>
 
-          {selectedImage && !prediction && (
-            <div style={{ display: 'flex', justifyContent: 'center', marginTop: '24px' }}>
+            <h1 className="hero-title">
+              Identify disease before it<br />
+              <em>kills the harvest</em>
+            </h1>
+
+            <p className="hero-desc">
+              Upload a photo of any arecanut palm tissue — leaf, trunk, base,
+              or fruit bunch — and get an instant field diagnosis backed by a
+              trained pathology model with visual attention mapping.
+            </p>
+
+            {/* Diagnose button lives here when image is selected */}
+            {selectedImage && !prediction && (
               <button
                 type="button"
                 className="btn-primary"
-                style={{ fontSize: '14px', padding: '12px 32px' }}
+                style={{ fontSize: '14px', padding: '13px 36px', alignSelf: 'flex-start' }}
                 disabled={isAnalyzing}
                 onClick={runDiagnosis}
               >
-                {isAnalyzing ? (
-                  <>
-                    <RefreshCw size={15} className="spinning" /> Scanning tissue structure...
-                  </>
-                ) : (
-                  <>
-                    <Activity size={15} /> Run Specimen Analysis
-                  </>
-                )}
+                <Activity size={15} /> Run Diagnosis
               </button>
-            </div>
-          )}
-        </section>
+            )}
 
-        {/* Error Alert */}
+            <div className="stat-strip">
+              {[
+                { value: '9',          label: 'Disease classes'       },
+                { value: 'Real-time',  label: 'Field diagnosis'      },
+                { value: 'Visual Map', label: 'Heatmap overlay'       },
+              ].map(s => (
+                <div className="stat-item" key={s.label}>
+                  <span className="stat-value">{s.value}</span>
+                  <span className="stat-label">{s.label}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* RIGHT — leaf upload */}
+          <div className="upload-col">
+            <LeafUpload
+              selectedImage={selectedImage}
+              onImageSelected={handleImageSelected}
+              onReset={handleReset}
+              isAnalyzing={isAnalyzing}
+            />
+          </div>
+        </div>
+
+        {/* ────────────────────── ERROR ────────────────────── */}
         {errorMsg && (
-          <div style={{ padding: '14px 18px', background: 'rgba(239, 68, 68, 0.04)', border: '1px solid rgba(239, 68, 68, 0.2)', borderRadius: '6px', color: '#fca5a5', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px' }}>
-            <AlertCircle size={16} />
-            <span>{errorMsg}</span>
+          <div className="error-box" style={{ maxWidth: '700px', margin: '0 auto 28px', marginLeft: '32px', marginRight: '32px' }}>
+            <AlertCircle size={16} style={{ flexShrink: 0, color: '#f87171' }} />
+            {errorMsg}
           </div>
         )}
 
-        {/* Prediction Results & Grad-CAM Viewer */}
-        {prediction && (
-          <section style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}>
-            <PredictionCard prediction={prediction} />
+        {/* ────────────────────── EMPTY STATE ────────────────────── */}
+        {!selectedImage && !prediction && (
+          <div className="empty-state">
+            <div className="empty-state-label">Conditions we detect</div>
+            <div className="disease-chips">
+              {DISEASE_HINTS.map(d => (
+                <div className="disease-chip" key={d.name}>
+                  <div className={`disease-chip-dot ${d.dot}`} />
+                  {d.name}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
+        {/* ────────────────────── RESULTS ────────────────────── */}
+        {prediction && (
+          <div className="tool-section">
+            <PredictionCard prediction={prediction} />
             {prediction.gradcam && (
               <GradCamViewer
-                gradcam={prediction.gradcam}
-                originalImageUrl={selectedImage?.previewUrl}
+                originalImage={selectedImage?.previewUrl}
+                gradcamImage={prediction.gradcam?.cam_image
+                  ? `data:image/jpeg;base64,${prediction.gradcam.cam_image}`
+                  : null}
+                severity={prediction.gradcam}
               />
             )}
-          </section>
+          </div>
         )}
-      </main>
 
-      {/* Footer */}
-      <footer style={{ borderTop: '1px solid var(--border-card)', padding: '20px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '11px' }}>
-        <p>AdikeScan Laboratory Diagnostics • MobileNetV3-Small Pathology Classifier • Saliency Overlay Mapping</p>
-      </footer>
+        {/* ────────────────────── FOOTER ────────────────────── */}
+        <footer className="footer">
+          <div className="footer-inner">
+            {/* Brand column */}
+            <div className="footer-brand">
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <div className="nav-logo-mark" style={{ width: '28px', height: '28px' }}>
+                  <LeafIcon size={15} />
+                </div>
+                <span style={{ fontFamily: 'var(--font-serif)', fontSize: '16px', fontWeight: '700', color: 'var(--text-primary)' }}>
+                  AdikeScan
+                </span>
+              </div>
+              <p>
+                A deep learning pathology tool for arecanut palm disease
+                detection, built to support Indian agronomists and farmers
+                with fast, accurate field diagnoses.
+              </p>
+            </div>
 
-      {/* Disease Catalog Reference Modal */}
+            {/* Detected diseases */}
+            <div>
+              <div className="footer-col-title">Disease Classes</div>
+              <ul className="footer-list">
+                <li>Yellow Leaf Disease</li>
+                <li>Koleroga / Mahali Koleroga</li>
+                <li>Stem Bleeding</li>
+                <li>Bud Rot</li>
+                <li>Anabe / Spindle Bug</li>
+              </ul>
+            </div>
+
+            {/* Capabilities */}
+            <div>
+              <div className="footer-col-title">Diagnostic Capabilities</div>
+              <ul className="footer-list">
+                <li>Automated pathogen identification</li>
+                <li>Visual attention saliency maps</li>
+                <li>Rapid field sample analysis</li>
+                <li>Agronomic treatment guidance</li>
+                <li>9 arecanut disease classes</li>
+              </ul>
+            </div>
+          </div>
+
+          <div className="footer-bottom">
+            <span>© 2025 AdikeScan · COE Project · All rights reserved</span>
+            <div className="footer-bottom-right">
+              <span>Pathology Diagnostics</span>
+              <span>Visual Saliency</span>
+              <span>Palm Health</span>
+            </div>
+          </div>
+        </footer>
+      </div>
+
+      {/* Disease Catalog Modal */}
       <DiseaseCatalog
         diseases={diseaseCatalog}
         isOpen={isCatalogOpen}
         onClose={() => setIsCatalogOpen(false)}
       />
-    </div>
+    </>
   )
 }
