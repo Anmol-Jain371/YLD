@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react'
-import { UploadCloud, Image as ImageIcon, Camera, RefreshCw, Sparkles, CheckCircle2 } from 'lucide-react'
+import { Microscope, Image as ImageIcon, Camera, RefreshCw } from 'lucide-react'
 
 export function LeafUpload({ onImageSelected, isAnalyzing, selectedImage, onReset }) {
   const [isDragActive, setIsDragActive] = useState(false)
@@ -53,7 +53,7 @@ export function LeafUpload({ onImageSelected, isAnalyzing, selectedImage, onRese
       />
 
       <div
-        className={`leaf-widget-container ${isDragActive ? 'drag-active' : ''} ${selectedImage ? 'has-image' : ''}`}
+        className={`specimen-mount-container ${isDragActive ? 'drag-active' : ''} ${selectedImage ? 'has-image' : ''}`}
         onDragEnter={handleDrag}
         onDragLeave={handleDrag}
         onDragOver={handleDrag}
@@ -64,12 +64,11 @@ export function LeafUpload({ onImageSelected, isAnalyzing, selectedImage, onRese
           <div style={{ position: 'relative', width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <img
               src={selectedImage.previewUrl}
-              alt="Selected plant"
+              alt="Mounted specimen"
               style={{
                 width: '100%',
                 height: '100%',
-                objectFit: 'cover',
-                borderRadius: '24px'
+                objectFit: 'cover'
               }}
             />
             <div
@@ -77,7 +76,6 @@ export function LeafUpload({ onImageSelected, isAnalyzing, selectedImage, onRese
                 position: 'absolute',
                 inset: 0,
                 background: 'linear-gradient(to top, rgba(0,0,0,0.85) 0%, transparent 60%)',
-                borderRadius: '24px',
                 display: 'flex',
                 alignItems: 'flex-end',
                 padding: '20px',
@@ -85,45 +83,47 @@ export function LeafUpload({ onImageSelected, isAnalyzing, selectedImage, onRese
               }}
             >
               <div>
-                <p style={{ fontSize: '14px', fontWeight: '600', color: '#fff' }}>
+                <p style={{ fontSize: '13px', fontWeight: '600', color: '#fff', fontFamily: 'var(--font-sans)' }}>
                   {selectedImage.file.name.length > 25 ? selectedImage.file.name.slice(0, 22) + '...' : selectedImage.file.name}
                 </p>
-                <p style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
+                <p style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>
                   {(selectedImage.file.size / 1024).toFixed(1)} KB
                 </p>
               </div>
               <button
                 type="button"
                 className="btn-secondary"
-                style={{ padding: '6px 12px', fontSize: '12px' }}
+                style={{ padding: '4px 10px', fontSize: '11px' }}
                 onClick={(e) => {
                   e.stopPropagation()
                   onReset()
                 }}
               >
-                <RefreshCw size={14} /> Change
+                <RefreshCw size={12} /> Replace Specimen
               </button>
             </div>
           </div>
         ) : (
           <div style={{ textAlign: 'center', padding: '30px', pointerEvents: 'none' }}>
-            {/* SVG Decorative Leaf Veins */}
-            <div style={{ marginBottom: '16px', color: 'var(--emerald-400)' }}>
-              <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/>
-                <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/>
+            {/* Minimalist Slide Mount Visual */}
+            <div style={{ marginBottom: '16px', color: 'var(--forest-500)', display: 'flex', justifyContent: 'center' }}>
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                <circle cx="12" cy="12" r="4" />
+                <line x1="12" y1="3" x2="12" y2="21" strokeDasharray="3 3" />
+                <line x1="3" y1="12" x2="21" y2="12" strokeDasharray="3 3" />
               </svg>
             </div>
             
-            <h3 style={{ fontSize: '18px', fontWeight: '700', marginBottom: '8px', color: '#fff' }}>
-              Drop Leaf / Plant Photo Here
+            <h3 style={{ fontSize: '16px', fontWeight: '600', marginBottom: '8px', color: '#fff', fontFamily: 'var(--font-serif)' }}>
+              Mount Specimen Image
             </h3>
-            <p style={{ fontSize: '13px', color: 'var(--text-secondary)', maxWidth: '260px', margin: '0 auto 16px' }}>
-              Drag and drop an arecanut leaf, trunk, bunch, or foot image, or browse from device
+            <p style={{ fontSize: '12px', color: 'var(--text-secondary)', maxWidth: '280px', margin: '0 auto 16px', lineHeight: '1.5' }}>
+              Drag and drop an arecanut leaf, trunk, bunch, or foot image, or browse local files
             </p>
             
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '6px 14px', background: 'rgba(52, 211, 153, 0.15)', borderRadius: '20px', color: 'var(--emerald-400)', fontSize: '12px', fontWeight: '600' }}>
-              <Sparkles size={14} /> 9 Disease Classes Supported
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '4px 12px', background: 'var(--forest-700)', border: '1px solid var(--forest-600)', borderRadius: '4px', color: 'var(--forest-400)', fontSize: '11px', fontWeight: '500' }}>
+              <Microscope size={13} /> 9 Pathology Classes
             </div>
           </div>
         )}
@@ -136,14 +136,14 @@ export function LeafUpload({ onImageSelected, isAnalyzing, selectedImage, onRese
             className="btn-primary"
             onClick={() => fileInputRef.current?.click()}
           >
-            <ImageIcon size={18} /> Browse Photos
+            <ImageIcon size={16} /> Select File
           </button>
           <button
             type="button"
             className="btn-secondary"
             onClick={() => cameraInputRef.current?.click()}
           >
-            <Camera size={18} /> Take Photo
+            <Camera size={16} /> Capture Specimen
           </button>
         </div>
       )}

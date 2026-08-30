@@ -3,9 +3,9 @@ import { LeafUpload } from './components/LeafUpload'
 import { PredictionCard } from './components/PredictionCard'
 import { GradCamViewer } from './components/GradCamViewer'
 import { DiseaseCatalog } from './components/DiseaseCatalog'
-import { Sprout, Activity, ShieldCheck, AlertCircle, Info, Sparkles, BookOpen, Cpu, RefreshCw } from 'lucide-react'
+import { Microscope, Activity, ShieldCheck, AlertCircle, Info, Clipboard, BookOpen, RefreshCw } from 'lucide-react'
 
-const API_BASE = 'http://localhost:8000'
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
 export default function App() {
   const [selectedImage, setSelectedImage] = useState(null)
@@ -82,7 +82,7 @@ export default function App() {
       setPrediction(result)
     } catch (err) {
       console.error('Diagnosis failed:', err)
-      setErrorMsg(`Diagnosis error: ${err.message}. Please verify the backend is running.`)
+      setErrorMsg(`Analysis failed: ${err.message}. Please check if the laboratory backend is active.`)
     } finally {
       setIsAnalyzing(false)
     }
@@ -93,36 +93,36 @@ export default function App() {
       {/* Top Navbar */}
       <header
         style={{
-          borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
-          background: 'rgba(10, 15, 13, 0.85)',
-          backdropFilter: 'blur(16px)',
+          borderBottom: '1px solid var(--border-card)',
+          background: 'rgba(12, 16, 13, 0.95)',
           position: 'sticky',
           top: 0,
           zIndex: 100
         }}
       >
-        <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '16px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+        <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '14px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <div
               style={{
-                width: '40px',
-                height: '40px',
-                borderRadius: '12px',
-                background: 'linear-gradient(135deg, var(--emerald-400), var(--emerald-600))',
+                width: '36px',
+                height: '36px',
+                borderRadius: '6px',
+                background: 'var(--forest-600)',
+                border: '1px solid var(--forest-500)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                boxShadow: '0 0 20px rgba(16, 185, 129, 0.4)'
+                boxShadow: '0 2px 8px rgba(74, 112, 81, 0.1)'
               }}
             >
-              <Sprout size={24} color="#fff" />
+              <Microscope size={18} color="#fff" />
             </div>
             <div>
-              <h1 style={{ fontSize: '20px', fontWeight: '800', letterSpacing: '-0.5px', color: '#fff' }}>
+              <h1 style={{ fontSize: '18px', fontWeight: '700', letterSpacing: '-0.3px', color: '#fff', fontFamily: 'var(--font-serif)' }}>
                 AdikeScan
               </h1>
-              <p style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>
-                Arecanut (Adike) Plant Disease Diagnosis & Grad-CAM
+              <p style={{ fontSize: '10px', color: 'var(--text-muted)' }}>
+                Arecanut Palm Pathology Diagnostic Tool
               </p>
             </div>
           </div>
@@ -134,42 +134,42 @@ export default function App() {
                 display: 'flex',
                 alignItems: 'center',
                 gap: '8px',
-                padding: '6px 14px',
-                background: 'rgba(0, 0, 0, 0.5)',
-                border: '1px solid rgba(255, 255, 255, 0.08)',
-                borderRadius: '20px',
-                fontSize: '12px'
+                padding: '5px 12px',
+                background: '#111512',
+                border: '1px solid var(--border-card)',
+                borderRadius: '4px',
+                fontSize: '11px'
               }}
             >
               <div
                 style={{
-                  width: '8px',
-                  height: '8px',
+                  width: '6px',
+                  height: '6px',
                   borderRadius: '50%',
                   backgroundColor:
                     systemHealth?.status === 'offline'
                       ? '#ef4444'
                       : systemHealth?.demo_mode
                       ? '#fbbf24'
-                      : '#34d399'
+                      : 'var(--forest-400)'
                 }}
               />
               <span style={{ color: 'var(--text-secondary)' }}>
                 {systemHealth?.status === 'offline'
-                  ? 'API Offline'
+                  ? 'System Offline'
                   : systemHealth?.demo_mode
-                  ? 'Demo Mode (Untrained)'
-                  : `Model Active (${systemHealth?.device?.toUpperCase() || 'GPU'})`}
+                  ? 'Specimen DB Loading'
+                  : `Diagnostics Active (${systemHealth?.device?.toUpperCase() || 'CPU'})`}
               </span>
             </div>
 
             <button
               type="button"
               className="btn-secondary"
-              style={{ padding: '8px 14px', fontSize: '13px' }}
+              style={{ padding: '6px 12px', fontSize: '12px' }}
               onClick={() => setIsCatalogOpen(true)}
             >
-              <BookOpen size={15} /> 9 Diseases Guide
+              <BookOpen size={13} /> Diagnostic Reference
             </button>
           </div>
         </div>
@@ -179,14 +179,14 @@ export default function App() {
       <main style={{ flex: 1, maxWidth: '1100px', margin: '0 auto', width: '100%', padding: '40px 20px', display: 'flex', flexDirection: 'column', gap: '32px' }}>
         {/* Intro Banner */}
         <div style={{ textAlign: 'center', maxWidth: '720px', margin: '0 auto' }}>
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '6px 14px', background: 'rgba(52, 211, 153, 0.1)', borderRadius: '20px', color: 'var(--emerald-400)', fontSize: '13px', fontWeight: '600', marginBottom: '14px' }}>
-            <Sparkles size={15} /> MobileNetV3-Small & PyTorch Grad-CAM Backpropagation
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '4px 12px', background: 'rgba(74, 112, 81, 0.08)', border: '1px solid rgba(74, 112, 81, 0.2)', borderRadius: '4px', color: 'var(--forest-400)', fontSize: '12px', fontWeight: '500', marginBottom: '14px' }}>
+            Botanical Pathology Report & Visual Saliency Mapping
           </div>
-          <h2 style={{ fontSize: '36px', fontWeight: '800', letterSpacing: '-1px', color: '#fff', marginBottom: '12px' }}>
-            Instant AI Pathology for Arecanut Palms
+          <h2 style={{ fontSize: '32px', fontWeight: '700', letterSpacing: '-0.5px', color: '#fff', marginBottom: '12px', fontFamily: 'var(--font-serif)' }}>
+            Arecanut Palm Pathology Report
           </h2>
-          <p style={{ fontSize: '15px', color: 'var(--text-secondary)', lineHeight: '1.6' }}>
-            Accurately detect Bud Borer, Mahali Koleroga, Yellow Leaf Disease, Stem Bleeding & Cracking with transparent visual explainability and tissue severity metrics.
+          <p style={{ fontSize: '14px', color: 'var(--text-secondary)', lineHeight: '1.6', maxWidth: '640px', margin: '0 auto' }}>
+            Upload tissue samples (leaves, trunk, base, or fruit) to analyze symptomatic regions, generate saliency heatmaps, and load tailored agronomic treatments.
           </p>
         </div>
 
@@ -204,17 +204,17 @@ export default function App() {
               <button
                 type="button"
                 className="btn-primary"
-                style={{ fontSize: '16px', padding: '14px 36px' }}
+                style={{ fontSize: '14px', padding: '12px 32px' }}
                 disabled={isAnalyzing}
                 onClick={runDiagnosis}
               >
                 {isAnalyzing ? (
                   <>
-                    <RefreshCw size={18} className="spinning" /> Analyzing Neural Activations...
+                    <RefreshCw size={15} className="spinning" /> Scanning tissue structure...
                   </>
                 ) : (
                   <>
-                    <Activity size={18} /> Run AI Diagnosis & Grad-CAM
+                    <Activity size={15} /> Run Specimen Analysis
                   </>
                 )}
               </button>
@@ -224,8 +224,8 @@ export default function App() {
 
         {/* Error Alert */}
         {errorMsg && (
-          <div style={{ padding: '16px 20px', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.3)', borderRadius: '12px', color: '#fca5a5', display: 'flex', alignItems: 'center', gap: '10px', fontSize: '14px' }}>
-            <AlertCircle size={18} />
+          <div style={{ padding: '14px 18px', background: 'rgba(239, 68, 68, 0.04)', border: '1px solid rgba(239, 68, 68, 0.2)', borderRadius: '6px', color: '#fca5a5', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px' }}>
+            <AlertCircle size={16} />
             <span>{errorMsg}</span>
           </div>
         )}
@@ -246,11 +246,11 @@ export default function App() {
       </main>
 
       {/* Footer */}
-      <footer style={{ borderTop: '1px solid rgba(255, 255, 255, 0.08)', padding: '24px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '13px' }}>
-        <p>AdikeScan AI Pathology • MobileNetV3-Small Classifier • PyTorch Grad-CAM Explainability</p>
+      <footer style={{ borderTop: '1px solid var(--border-card)', padding: '20px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '11px' }}>
+        <p>AdikeScan Laboratory Diagnostics • MobileNetV3-Small Pathology Classifier • Saliency Overlay Mapping</p>
       </footer>
 
-      {/* Disease Catalog Modal */}
+      {/* Disease Catalog Reference Modal */}
       <DiseaseCatalog
         diseases={diseaseCatalog}
         isOpen={isCatalogOpen}
