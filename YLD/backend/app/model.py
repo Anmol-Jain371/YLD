@@ -47,11 +47,15 @@ def get_transforms():
     
     return train_transform, val_transform
 
-def load_trained_model(checkpoint_path="/home/gopalkrishnajs/Projects/Integer/backend/model/areca_model.pt", device=None):
+def load_trained_model(checkpoint_path=None, device=None):
     """
     Loads trained weights into MobileNetV3-Small.
     Returns (model, is_loaded) tuple.
     """
+    from pathlib import Path
+    if checkpoint_path is None:
+        checkpoint_path = str(Path(__file__).resolve().parents[1] / "model" / "areca_model.pt")
+        
     if device is None:
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         

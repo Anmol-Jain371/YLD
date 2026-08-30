@@ -9,11 +9,17 @@ import random
 from pathlib import Path
 
 def split_dataset(
-    source_dir="/home/gopalkrishnajs/Projects/Integer/YLD/datasets/dataset",
-    output_base_dir="/home/gopalkrishnajs/Projects/Integer/backend/data",
+    source_dir=None,
+    output_base_dir=None,
     train_ratio=0.8,
     seed=42
 ):
+    project_root = Path(__file__).resolve().parents[2]
+    if source_dir is None:
+        source_dir = str(project_root / "datasets" / "dataset")
+    if output_base_dir is None:
+        output_base_dir = str(project_root / "backend" / "data")
+        
     random.seed(seed)
     
     source_path = Path(source_dir)

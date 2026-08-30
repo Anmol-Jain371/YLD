@@ -1,12 +1,18 @@
-import sys, os
-sys.path.insert(0, "/home/gopalkrishnajs/Projects/Integer")
+import sys
+import os
+from pathlib import Path
+
+# Add project root to sys.path dynamically
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
 """
 AdikeScan FastAPI Backend Application.
 Provides /health and /predict endpoints with PyTorch MobileNetV3-Small & Grad-CAM.
 """
 
 import io
-import os
 import torch
 import torch.nn.functional as F
 from PIL import Image
@@ -34,7 +40,7 @@ app.add_middleware(
 )
 
 # Global model state
-MODEL_PATH = "/home/gopalkrishnajs/Projects/Integer/backend/model/areca_model.pt"
+MODEL_PATH = str(Path(__file__).resolve().parents[1] / "model" / "areca_model.pt")
 app.state.model = None
 app.state.demo_mode = True
 app.state.device = torch.device("cpu")

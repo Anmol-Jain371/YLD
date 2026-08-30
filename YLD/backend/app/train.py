@@ -1,12 +1,18 @@
-import sys, os
-sys.path.insert(0, "/home/gopalkrishnajs/Projects/Integer")
+import sys
+import os
+from pathlib import Path
+
+# Add project root to sys.path dynamically
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
 """
 Training Script for Arecanut Disease Classification using MobileNetV3-Small.
 Trains on backend/data/train and evaluates on backend/data/val.
 Saves model checkpoint to backend/model/areca_model.pt.
 """
 
-import os
 import time
 import json
 import torch
@@ -18,13 +24,18 @@ from backend.app.model import build_mobilenet_v3_small, get_transforms, NUM_CLAS
 from backend.app.disease_info import CLASS_NAMES
 
 def train_model(
-    data_dir="/home/gopalkrishnajs/Projects/Integer/backend/data",
-    model_save_path="/home/gopalkrishnajs/Projects/Integer/backend/model/areca_model.pt",
+    data_dir=None,
+    model_save_path=None,
     epochs=15,
     batch_size=32,
     learning_rate=3e-4,
     device=None
 ):
+    backend_dir = Path(__file__).resolve().parents[1]
+    if data_dir is None:
+        data_dir = str(backend_dir / "data")
+    if model_save_path is None:
+        model_save_path = str(backend_dir / "model" / "areca_model.pt")
     if device is None:
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         
