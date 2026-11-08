@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { LeafUpload } from './components/LeafUpload'
 import { PredictionCard } from './components/PredictionCard'
 import { GradCamViewer } from './components/GradCamViewer'
 import { DiseaseCatalog } from './components/DiseaseCatalog'
-import { BookOpen, Activity, AlertCircle } from 'lucide-react'
+import { BookOpen, Activity, AlertCircle, RefreshCw } from 'lucide-react'
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
@@ -73,8 +73,17 @@ export default function App() {
   const [diseaseCatalog, setDiseaseCatalog] = useState(null)
   const [isCatalogOpen, setIsCatalogOpen]   = useState(false)
   const [errorMsg, setErrorMsg]             = useState(null)
+  const resultsRef                          = useRef(null)
 
   useEffect(() => { fetchHealth(); fetchDiseases() }, [])
+
+  useEffect(() => {
+    if (prediction && resultsRef.current) {
+      setTimeout(() => {
+        resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      }, 100)
+    }
+  }, [prediction])
 
   const fetchHealth = async () => {
     try {
@@ -205,6 +214,28 @@ export default function App() {
               </button>
             )}
 
+            {/* If prediction already exists, offer quick new scan button */}
+            {prediction && (
+              <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                <button
+                  type="button"
+                  className="btn-primary"
+                  style={{ fontSize: '13px', padding: '10px 24px' }}
+                  onClick={() => resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+                >
+                  View Heatmap & Report ↓
+                </button>
+                <button
+                  type="button"
+                  className="btn-secondary"
+                  style={{ fontSize: '13px', padding: '10px 20px' }}
+                  onClick={handleReset}
+                >
+                  <RefreshCw size={13} /> Scan Another
+                </button>
+              </div>
+            )}
+
             <div className="stat-strip">
               {[
                 { value: '9',          label: 'Disease classes'       },
@@ -255,14 +286,13 @@ export default function App() {
 
         {/* ────────────────────── RESULTS ────────────────────── */}
         {prediction && (
-          <div className="tool-section">
+          <div ref={resultsRef} className="tool-section" style={{ scrollMarginTop: '80px' }}>
             <PredictionCard prediction={prediction} />
             {prediction.gradcam && (
               <GradCamViewer
                 originalImage={selectedImage?.previewUrl}
-                gradcamImage={prediction.gradcam?.cam_image
-                  ? `data:image/jpeg;base64,${prediction.gradcam.cam_image}`
-                  : null}
+                overlayImage={prediction.gradcam?.overlay}
+                heatmapImage={prediction.gradcam?.heatmap}
                 severity={prediction.gradcam}
               />
             )}

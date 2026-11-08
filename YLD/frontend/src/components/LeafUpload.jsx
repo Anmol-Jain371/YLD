@@ -194,7 +194,18 @@ export function LeafUpload({ onImageSelected, isAnalyzing, selectedImage, onRese
       </div>
 
       {/* Action buttons below the leaf */}
-      {!selectedImage && (
+      {selectedImage ? (
+        <div style={{ display: 'flex', gap: '10px', marginTop: '12px' }}>
+          <button
+            type="button"
+            className="btn-secondary"
+            onClick={onReset}
+            style={{ fontSize: '12.5px', padding: '8px 18px', background: 'rgba(255,255,255,0.06)' }}
+          >
+            <RefreshCw size={13} /> Change Specimen
+          </button>
+        </div>
+      ) : (
         <div style={{ display: 'flex', gap: '10px', marginTop: '4px' }}>
           <button type="button" className="btn-primary" onClick={() => fileInputRef.current?.click()}>
             <ImageIcon size={14} /> Browse Files
